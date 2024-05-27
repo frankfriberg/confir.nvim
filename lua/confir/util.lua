@@ -1,14 +1,6 @@
-local config = require("confir.config")
 local M = {}
 
-local win_options = config.win_options
-local relative = win_options.relative
-local margin = win_options.margin
-
-local is_cursor = relative == "cursor"
-local is_win = relative == "win"
-
-local relative_height = function()
+local relative_height = function(is_cursor, is_win)
 	if is_cursor then
 		return vim.fn.winline()
 	elseif is_win then
@@ -18,7 +10,7 @@ local relative_height = function()
 	end
 end
 
-local relative_width = function()
+local relative_width = function(is_win)
 	if is_win then
 		return vim.api.nvim_win_get_width(0)
 	else
@@ -26,7 +18,7 @@ local relative_width = function()
 	end
 end
 
-local get_left_position = function(win_width)
+local get_left_position = function(is_cursor, _, win_width, margin)
 	if is_cursor then
 		return -win_width + margin.left + 1
 	else
@@ -34,43 +26,43 @@ local get_left_position = function(win_width)
 	end
 end
 
-local get_center_position = function(win_width)
+local get_center_position = function(is_cursor, is_win, win_width, _)
 	if is_cursor then
 		return -(win_width / 2)
 	else
-		return (relative_width() - win_width) / 2
+		return (relative_width(is_win) - win_width) / 2
 	end
 end
 
-local get_right_position = function(win_width)
+local get_right_position = function(is_cursor, is_win, win_width, margin)
 	if is_cursor then
 		return win_width + margin.right
 	else
-		return relative_width() - win_width - margin.right
+		return relative_width(is_win) - win_width - margin.right
 	end
 end
 
-local get_top_position = function(win_height)
+local get_top_position = function(is_cursor, _, win_height, margin)
 	if is_cursor then
-		return -win_height - margin.top - 1
+		return margin.top - 1
 	else
 		return margin.top
 	end
 end
 
-local get_middle_position = function(win_height)
+local get_middle_position = function(is_cursor, is_win, win_height, _)
 	if is_cursor then
 		return win_height / 2
 	else
-		return (relative_height() - win_height) / 2
+		return (relative_height(is_cursor, is_win) - win_height) / 2
 	end
 end
 
-local get_bottom_position = function()
+local get_bottom_position = function(is_cursor, is_win, _, margin)
 	if is_cursor then
 		return margin.bottom + 1
 	else
-		return relative_height() - vim.o.cmdheight - margin.bottom
+		return relative_height(is_cursor, is_win) - vim.o.cmdheight - margin.bottom
 	end
 end
 
@@ -118,5 +110,64 @@ M.positions = {
 		anchor = "NW",
 	},
 }
+
+M.get_col_row_anchor = function(win_options, win_width, win_height)
+	local position = win_options.position
+	local relative = win_options.relative
+	local margin = win_options.margin
+
+	local is_cursor = relative == "cursor"
+	local is_win = relative == "win"
+
+	if position == "bottom-left" then
+		return {
+			row = get_bottom_position(is_cursor, is_win, margin),
+			col = get_left_position(is_cursor, win_width, margin),
+			anchor = "SW",
+		}
+	elseif position == "bottom-center" then
+		return {
+			row = get_bottom_position(is_cursor, is_win, margin),
+			col = get_center_position(is_cursor, is_win, win_width),
+			anchor = "SW",
+		}
+	elseif position == "bottom-right" then
+		return {
+			row = get_bottom_position(is_cursor, is_win, margin),
+			col = get_right_position(is_cursor, is_win, win_width, margin),
+			anchor = "SE",
+		}
+	elseif position == "top-left" then
+		return {
+			row = get_top_position(is_cursor, win_height, margin),
+			col = get_left_position(is_cursor, win_width, margin),
+			anchor = "NW",
+		}
+	elseif position == "top-center" then
+		return {
+			row = get_top_position(is_cursor, win_height, margin),
+			col = get_center_position(is_cursor, is_win, win_width),
+			anchor = "NW",
+		}
+	elseif position == "top-right" then
+		return {
+			row = get_top_position(is_cursor, win_height, margin),
+			col = get_right_position(is_cursor, is_win, win_width, margin),
+			anchor = "NE",
+		}
+	elseif position == "center-center" then
+		return {
+			row = get_middle_position(is_cursor, is_win, win_height),
+			col = get_center_position(is_cursor, is_win, win_width),
+			anchor = "NW",
+		}
+	else
+		return {
+			row = 0,
+			col = 0,
+			anchor = "NW",
+		}
+	end
+end
 
 return M
