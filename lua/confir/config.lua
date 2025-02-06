@@ -1,34 +1,20 @@
-local ns_id = vim.api.nvim_create_namespace("confir")
+local C = {}
 
-if vim.api.nvim_win_set_hl_ns then
-	vim.api.nvim_set_hl(ns_id, "NormalFloat", { bg = "NONE" })
-	vim.api.nvim_set_hl(ns_id, "FloatBorder", { bg = "NONE" })
-end
-
-local config = {
+local options = {
 	max_width = 40,
-	ns_id = ns_id,
-	types = {
-		error = {
-			icon = "󰅚",
-			color = "ErrorFloat",
-		},
-		question = {
-			icon = "",
-			color = "HintFloat",
-		},
-		info = {
-			icon = "",
-			color = "InfoFloat",
-		},
-		warning = {
-			icon = "",
-			color = "Comment",
-		},
-		generic = {
-			icon = "",
-			color = "WarningFloat",
-		},
+	colors = {
+		generic = "DiagnosticHint",
+		question = "DiagnosticOk",
+		info = "DiagnosticInfo",
+		warning = "DiagnosticWarn",
+		error = "DiagnosticError",
+	},
+	icons = {
+		generic = "",
+		question = "",
+		info = "",
+		warning = "",
+		error = "󰅚",
 	},
 	win_options = {
 		relative = "win",
@@ -45,4 +31,13 @@ local config = {
 	},
 }
 
-return config
+C.set = function(user_config)
+	options = vim.tbl_deep_extend("force", options, user_config or {})
+	return options
+end
+
+C.get = function()
+	return options
+end
+
+return C
