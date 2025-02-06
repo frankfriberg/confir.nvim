@@ -106,7 +106,7 @@ end
 W.create_window = function(msg, choices, type)
 	local config = require("confir.config").get()
 	W.type = {
-		icon = type and config.icons[type] or config.icon.generic,
+		icon = type and config.icons[type] or config.icons.generic,
 		color = type and config.colors[type] or config.colors.generic,
 	}
 	local title, description = get_title_and_description(msg)
